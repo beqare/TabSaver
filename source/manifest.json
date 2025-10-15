@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "TabSaver",
+  "version": "1.2",
+  "description": "Save and restore your browser tabs easily with enhanced features including export/import and dark mode.",
+  "permissions": ["tabs", "storage", "downloads"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

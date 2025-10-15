@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>TabSaver</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="header">
+      <span>TabSaver</span>
+      <button id="theme-toggle" class="theme-toggle">🌙</button>
+    </div>
+
+    <div class="container">
+      <div class="input-group">
+        <input
+          type="text"
+          id="session-name-input"
+          placeholder="Enter session name"
+          maxlength="50"
+        />
+      </div>
+
+      <button id="save-current-tabs" class="btn-primary">
+        SAVE CURRENT TABS
+      </button>
+
+      <div class="section-title">Saved Sessions</div>
+
+      <div id="session-list">
+        <!-- dynamic content -->
+      </div>
+
+      <div class="action-buttons">
+        <button id="export-all" class="btn-secondary">Export All</button>
+        <button id="import-sessions" class="btn-secondary">Import</button>
+      </div>
+    </div>
+
+    <div class="footer">Click on session name to view details</div>
+
+    <div id="notification" class="notification"></div>
+
+    <input type="file" id="import-file" accept=".json" style="display: none" />
+
+    <script src="popup.js"></script>
+  </body>
+</html>
