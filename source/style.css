@@ -19,8 +19,8 @@
 
 [data-theme="dark"] {
   /* Dark Theme */
-  --primary-color: #5d9cec;
-  --primary-hover: #4a89dc;
+  --primary-color: #ec855d;
+  --primary-hover: #dc674a;
   --secondary-color: #a0a0a0;
   --secondary-hover: #888888;
   --danger-color: #e74c3c;
@@ -72,6 +72,7 @@ body {
   align-items: center;
   justify-content: center;
   transition: background-color 0.2s;
+  filter: drop-shadow(0 2px 6px rgb(0, 0, 0));
 }
 
 .theme-toggle:hover {
@@ -235,7 +236,9 @@ button {
   font-size: 12px;
   color: var(--text-muted);
 }
-
+.githublink {
+  color: var(--text-muted);
+}
 .notification {
   position: fixed;
   top: 10px;

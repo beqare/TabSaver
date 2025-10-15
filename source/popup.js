@@ -2,10 +2,18 @@ const sessionNameInput = document.getElementById("session-name-input");
 const saveCurrentTabsButton = document.getElementById("save-current-tabs");
 const sessionList = document.getElementById("session-list");
 const notification = document.getElementById("notification");
+const themeToggle = document.getElementById("theme-toggle");
+const exportAllButton = document.getElementById("export-all");
+const importSessionsButton = document.getElementById("import-sessions");
+const importFileInput = document.getElementById("import-file");
 
-document.addEventListener("DOMContentLoaded", loadSessions);
+document.addEventListener("DOMContentLoaded", initializeApp);
 
 saveCurrentTabsButton.addEventListener("click", saveCurrentTabs);
+themeToggle.addEventListener("click", toggleTheme);
+exportAllButton.addEventListener("click", exportAllSessions);
+importSessionsButton.addEventListener("click", triggerImport);
+importFileInput.addEventListener("change", importSessions);
 
 // Allow saving with Enter key
 sessionNameInput.addEventListener("keypress", (e) => {
@@ -13,6 +21,12 @@ sessionNameInput.addEventListener("keypress", (e) => {
     saveCurrentTabs();
   }
 });
+
+// Initialize the application
+function initializeApp() {
+  loadSessions();
+  loadTheme();
+}
 
 // Show notification
 function showNotification(message, isError = false) {
@@ -240,7 +254,7 @@ function deleteSession(index) {
   });
 }
 
-// Show session details (placeholder for future enhancement)
+// Show session details
 function showSessionDetails(index) {
   chrome.storage.sync.get(["sessions"], (result) => {
     const sessions = result.sessions || [];
@@ -253,6 +267,156 @@ function showSessionDetails(index) {
 
       alert(`Session: ${session.name}\n\nTabs:\n${tabList}`);
     }
+  });
+}
+
+// Export all sessions to a JSON file
+function exportAllSessions() {
+  chrome.storage.sync.get(["sessions"], (result) => {
+    const sessions = result.sessions || [];
+
+    if (sessions.length === 0) {
+      showNotification("No sessions to export!", true);
+      return;
+    }
+
+    const exportData = {
+      version: "2.0",
+      exportDate: new Date().toISOString(),
+      sessionCount: sessions.length,
+      sessions: sessions,
+    };
+
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
+
+    const timestamp = new Date().toISOString().split("T")[0];
+    const filename = `tab-sessions-export-${timestamp}.json`;
+
+    const url = URL.createObjectURL(dataBlob);
+    chrome.downloads.download(
+      {
+        url: url,
+        filename: filename,
+        saveAs: true,
+      },
+      () => {
+        URL.revokeObjectURL(url);
+        if (chrome.runtime.lastError) {
+          showNotification(
+            "Error exporting sessions: " + chrome.runtime.lastError.message,
+            true
+          );
+        } else {
+          showNotification(
+            `Exported ${sessions.length} sessions successfully!`
+          );
+        }
+      }
+    );
+  });
+}
+
+// Trigger file import
+function triggerImport() {
+  importFileInput.click();
+}
+
+// Import sessions from JSON file
+function importSessions(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      const importData = JSON.parse(e.target.result);
+
+      // Validate import data structure
+      if (!importData.sessions || !Array.isArray(importData.sessions)) {
+        showNotification("Invalid file format!", true);
+        return;
+      }
+
+      chrome.storage.sync.get(["sessions"], (result) => {
+        const existingSessions = result.sessions || [];
+        const newSessions = [...existingSessions];
+        let importedCount = 0;
+        let skippedCount = 0;
+
+        importData.sessions.forEach((session) => {
+          // Check if session already exists
+          const exists = existingSessions.some(
+            (existingSession) =>
+              existingSession.name === session.name &&
+              existingSession.timestamp === session.timestamp
+          );
+
+          if (!exists) {
+            newSessions.push(session);
+            importedCount++;
+          } else {
+            skippedCount++;
+          }
+        });
+
+        if (importedCount === 0) {
+          showNotification("No new sessions to import!", true);
+          return;
+        }
+
+        chrome.storage.sync.set({ sessions: newSessions }, () => {
+          if (chrome.runtime.lastError) {
+            showNotification(
+              "Error importing sessions: " + chrome.runtime.lastError.message,
+              true
+            );
+            return;
+          }
+
+          loadSessions();
+          let message = `Imported ${importedCount} sessions successfully!`;
+          if (skippedCount > 0) {
+            message += ` ${skippedCount} duplicates skipped.`;
+          }
+          showNotification(message);
+        });
+      });
+    } catch (error) {
+      showNotification("Error parsing file: " + error.message, true);
+    }
+  };
+
+  reader.onerror = function () {
+    showNotification("Error reading file!", true);
+  };
+
+  reader.readAsText(file);
+
+  // Reset file input
+  event.target.value = "";
+}
+
+// Theme functionality
+function toggleTheme() {
+  chrome.storage.sync.get(["theme"], (result) => {
+    const currentTheme = result.theme || "light";
+    const newTheme = currentTheme === "light" ? "dark" : "light";
+
+    setTheme(newTheme);
+    chrome.storage.sync.set({ theme: newTheme });
+  });
+}
+
+function setTheme(theme) {
+  document.body.setAttribute("data-theme", theme);
+  themeToggle.textContent = theme === "light" ? "🌙" : "☀️";
+}
+
+function loadTheme() {
+  chrome.storage.sync.get(["theme"], (result) => {
+    const theme = result.theme || "light";
+    setTheme(theme);
   });
 }
 
